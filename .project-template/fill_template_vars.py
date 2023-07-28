@@ -12,10 +12,11 @@ def _find_files(project_root):
     filepaths = []
     for dir_path, _dir_names, file_names in os.walk(project_root):
         if not re.search(path_exclude_pattern, dir_path):
-            for file in file_names:
-                if not re.search(file_exclude_pattern, file):
-                    filepaths.append(str(Path(dir_path, file)))
-
+            filepaths.extend(
+                str(Path(dir_path, file))
+                for file in file_names
+                if not re.search(file_exclude_pattern, file)
+            )
     return filepaths
 
 
@@ -23,8 +24,7 @@ def _replace(pattern, replacement, project_root):
     print(f"Replacing values: {pattern}")
     for file in _find_files(project_root):
         try:
-            with open(file) as f:
-                content = f.read()
+            content = Path(file).read_text()
             content = re.sub(pattern, replacement, content)
             with open(file, "w") as f:
                 f.write(content)

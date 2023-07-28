@@ -73,127 +73,101 @@ class Stack(StackAPI):
         self._append((bytes, value))
 
     def pop1_bytes(self) -> bytes:
-        #
-        # Note: This function is optimized for speed over readability.
-        # Knowing the popped type means that we can pop *very* quickly
-        # when the popped type matches the pushed type.
-        #
         if not self.values:
             raise InsufficientStack("Wanted 1 stack item as bytes, had none")
+        item_type, popped = self._pop_typed()
+        if item_type is int:
+            return int_to_big_endian(popped)  # type: ignore
+        elif item_type is bytes:
+            return popped  # type: ignore
         else:
-            item_type, popped = self._pop_typed()
-            if item_type is int:
-                return int_to_big_endian(popped)  # type: ignore
-            elif item_type is bytes:
-                return popped  # type: ignore
-            else:
-                raise _busted_type(item_type, popped)
+            raise _busted_type(item_type, popped)
 
     def pop1_int(self) -> int:
-        #
-        # Note: This function is optimized for speed over readability.
-        #
         if not self.values:
             raise InsufficientStack("Wanted 1 stack item as int, had none")
+        item_type, popped = self._pop_typed()
+        if item_type is int:
+            return popped  # type: ignore
+        elif item_type is bytes:
+            return big_endian_to_int(popped)  # type: ignore
         else:
-            item_type, popped = self._pop_typed()
+            raise _busted_type(item_type, popped)
+
+    def pop1_any(self) -> Union[int, bytes]:
+        if not self.values:
+            raise InsufficientStack("Wanted 1 stack item, had none")
+        _, popped = self._pop_typed()
+        return popped
+
+    def pop_any(self, num_items: int) -> Tuple[Union[int, bytes], ...]:
+        if num_items > len(self.values):
+            raise InsufficientStack(
+                "Wanted %d stack items, only had %d",
+                num_items,
+                len(self.values),
+            )
+        neg_num_items = -1 * num_items
+
+        # Quickest way to pop off multiple values from the end, in place
+        all_popped = reversed(self.values[neg_num_items:])
+        del self.values[neg_num_items:]
+
+        # This doesn't use the @to_tuple(generator) pattern, for added performance
+        return tuple(val for _, val in all_popped)
+
+    def pop_ints(self, num_items: int) -> Tuple[int, ...]:
+        if num_items > len(self.values):
+            raise InsufficientStack(
+                "Wanted %d stack items, only had %d",
+                num_items,
+                len(self.values),
+            )
+        neg_num_items = -1 * num_items
+
+        # Quickest way to pop off multiple values from the end, in place
+        all_popped = reversed(self.values[neg_num_items:])
+        del self.values[neg_num_items:]
+
+        type_cast_popped = []
+
+        # Convert any non-matching types to the requested type (int)
+        # This doesn't use the @to_tuple(generator) pattern, for added performance
+        for item_type, popped in all_popped:
             if item_type is int:
-                return popped  # type: ignore
+                type_cast_popped.append(popped)
             elif item_type is bytes:
-                return big_endian_to_int(popped)  # type: ignore
+                type_cast_popped.append(big_endian_to_int(popped))  # type: ignore
             else:
                 raise _busted_type(item_type, popped)
 
-    def pop1_any(self) -> Union[int, bytes]:
-        #
-        # Note: This function is optimized for speed over readability.
-        #
-        if not self.values:
-            raise InsufficientStack("Wanted 1 stack item, had none")
-        else:
-            _, popped = self._pop_typed()
-            return popped
-
-    def pop_any(self, num_items: int) -> Tuple[Union[int, bytes], ...]:
-        #
-        # Note: This function is optimized for speed over readability.
-        #
-        if num_items > len(self.values):
-            raise InsufficientStack(
-                "Wanted %d stack items, only had %d",
-                num_items,
-                len(self.values),
-            )
-        else:
-            neg_num_items = -1 * num_items
-
-            # Quickest way to pop off multiple values from the end, in place
-            all_popped = reversed(self.values[neg_num_items:])
-            del self.values[neg_num_items:]
-
-            # This doesn't use the @to_tuple(generator) pattern, for added performance
-            return tuple(val for _, val in all_popped)
-
-    def pop_ints(self, num_items: int) -> Tuple[int, ...]:
-        #
-        # Note: This function is optimized for speed over readability.
-        #
-        if num_items > len(self.values):
-            raise InsufficientStack(
-                "Wanted %d stack items, only had %d",
-                num_items,
-                len(self.values),
-            )
-        else:
-            neg_num_items = -1 * num_items
-
-            # Quickest way to pop off multiple values from the end, in place
-            all_popped = reversed(self.values[neg_num_items:])
-            del self.values[neg_num_items:]
-
-            type_cast_popped = []
-
-            # Convert any non-matching types to the requested type (int)
-            # This doesn't use the @to_tuple(generator) pattern, for added performance
-            for item_type, popped in all_popped:
-                if item_type is int:
-                    type_cast_popped.append(popped)
-                elif item_type is bytes:
-                    type_cast_popped.append(big_endian_to_int(popped))  # type: ignore
-                else:
-                    raise _busted_type(item_type, popped)
-
-            return tuple(type_cast_popped)  # type: ignore
+        return tuple(type_cast_popped)  # type: ignore
 
     def pop_bytes(self, num_items: int) -> Tuple[bytes, ...]:
-        #
-        # Note: This function is optimized for speed over readability.
-        #
         if num_items > len(self.values):
             raise InsufficientStack(
                 "Wanted %d stack items, only had %d",
                 num_items,
                 len(self.values),
             )
-        else:
-            neg_num_items = -1 * num_items
+        neg_num_items = -1 * num_items
 
-            all_popped = reversed(self.values[neg_num_items:])
-            del self.values[neg_num_items:]
+        all_popped = reversed(self.values[neg_num_items:])
+        del self.values[neg_num_items:]
 
-            type_cast_popped = []
+        type_cast_popped = []
 
-            # Convert any non-matching types to the requested type (int)
-            # This doesn't use the @to_tuple(generator) pattern, for added performance
-            for item_type, popped in all_popped:
-                if item_type is int:
-                    type_cast_popped.append(int_to_big_endian(popped))  # type: ignore
-                elif item_type is bytes:
-                    type_cast_popped.append(popped)  # type: ignore
-                else:
-                    raise _busted_type(item_type, popped)
+        # Convert any non-matching types to the requested type (int)
+        # This doesn't use the @to_tuple(generator) pattern, for added performance
+        for item_type, popped in all_popped:
+            if item_type is int:
+                type_cast_popped.append(int_to_big_endian(popped))  # type: ignore
+            elif item_type is bytes:
+                type_cast_popped.append(popped)  # type: ignore
+            else:
+                raise _busted_type(item_type, popped)
 
-            return tuple(type_cast_popped)
+        return tuple(type_cast_popped)
 
     def swap(self, position: int) -> None:
         idx = -1 * position - 1
@@ -217,7 +191,7 @@ class Stack(StackAPI):
             if isinstance(val, int):
                 yield hex(val)
             elif isinstance(val, bytes):
-                yield "0x" + val.hex()
+                yield f"0x{val.hex()}"
             else:
                 raise RuntimeError(
                     f"Stack items can only be int or bytes, not {val!r}:{item_type}"

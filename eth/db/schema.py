@@ -15,8 +15,7 @@ class SchemaV1(SchemaAPI):
 
     @staticmethod
     def make_block_number_to_hash_lookup_key(block_number: BlockNumber) -> bytes:
-        number_to_hash_key = b"block-number-to-hash:%d" % block_number
-        return number_to_hash_key
+        return b"block-number-to-hash:%d" % block_number
 
     @staticmethod
     def make_block_hash_to_score_lookup_key(block_hash: Hash32) -> bytes:

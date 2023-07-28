@@ -175,14 +175,9 @@ def fork_at(
 
 
 def _is_homestead(vm_class: Type[VirtualMachineAPI]) -> bool:
-    if not issubclass(vm_class, HomesteadVM):
-        # It isn't a subclass of the HomesteadVM
-        return False
-    elif issubclass(vm_class, TangerineWhistleVM):
-        # It is a subclass of one of the subsequent forks
-        return False
-    else:
-        return True
+    return issubclass(vm_class, HomesteadVM) and not issubclass(
+        vm_class, TangerineWhistleVM
+    )
 
 
 @to_tuple
@@ -293,10 +288,7 @@ def _get_default_genesis_params(
     genesis_state: AccountState,
 ) -> Iterable[Tuple[str, Union[BlockNumber, int, None, bytes, Address, Hash32]]]:
     for key, value in GENESIS_DEFAULTS:
-        if key == "state_root" and genesis_state:
-            # leave out the `state_root` if a genesis state was specified
-            pass
-        else:
+        if key != "state_root" or not genesis_state:
             yield key, value
     yield "timestamp", int(time.time())  # populate the timestamp value at runtime
 
@@ -354,8 +346,7 @@ def _fill_and_normalize_state(simple_state: GeneralState) -> AccountState:
         }
         for address in base_state.keys()
     }
-    state = deep_merge(defaults, base_state)
-    return state
+    return deep_merge(defaults, base_state)
 
 
 @curry
@@ -369,11 +360,7 @@ def genesis(
     Initialize the given chain class with the given genesis header parameters
     and chain state.
     """
-    if state is None:
-        genesis_state: AccountState = {}
-    else:
-        genesis_state = _fill_and_normalize_state(state)
-
+    genesis_state = {} if state is None else _fill_and_normalize_state(state)
     genesis_params_defaults = _get_default_genesis_params(genesis_state)
 
     if params is None:
@@ -381,11 +368,7 @@ def genesis(
     else:
         genesis_params = merge(genesis_params_defaults, params)
 
-    if db is None:
-        base_db: AtomicDatabaseAPI = AtomicDB()
-    else:
-        base_db = db
-
+    base_db = AtomicDB() if db is None else db
     return chain_class.from_genesis(base_db, genesis_params, genesis_state)
 
 
@@ -463,8 +446,7 @@ def copy(chain: MiningChainAPI) -> MiningChainAPI:
             f"Unsupported wrapped database: {type(base_db.wrapped_db)}"
         )
 
-    chain_copy = type(chain)(db, chain.header)
-    return chain_copy
+    return type(chain)(db, chain.header)
 
 
 def chain_split(
@@ -498,11 +480,10 @@ def chain_split(
     @to_tuple
     def _chain_split(chain: ChainAPI) -> Iterable[ChainAPI]:
         for split_fns in splits:
-            result = build(
+            yield build(
                 chain,
                 *split_fns,
             )
-            yield result
 
     return _chain_split
 
@@ -521,5 +502,4 @@ def at_block_number(
     at_block = chain.get_canonical_block_by_number(BlockNumber(block_number))
 
     db = chain.chaindb.db
-    chain_at_block = type(chain)(db, chain.create_header_from_parent(at_block.header))
-    return chain_at_block
+    return type(chain)(db, chain.create_header_from_parent(at_block.header))

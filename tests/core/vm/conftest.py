@@ -31,8 +31,7 @@ def canonical_address_b(normalized_address_b):
 
 @pytest.fixture
 def transaction_context(canonical_address_b):
-    tx_context = BaseTransactionContext(
+    return BaseTransactionContext(
         gas_price=1,
         origin=canonical_address_b,
     )
-    return tx_context

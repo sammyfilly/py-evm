@@ -41,26 +41,22 @@ def collect_touched_accounts(
 
     # collect those explicitly marked for deletion ("beneficiary" is of SELFDESTRUCT)
     for beneficiary in sorted(set(computation.accounts_to_delete.values())):
-        if computation.is_error or ancestor_had_error:
-            # Special case to account for geth+parity bug
-            # https://github.com/ethereum/EIPs/issues/716
-            if beneficiary == THREE:
-                yield beneficiary
-            continue
-        else:
+        if (
+            (computation.is_error or ancestor_had_error)
+            and beneficiary == THREE
+            or not computation.is_error
+            and not ancestor_had_error
+        ):
             yield beneficiary
-
     # collect account directly addressed
     if computation.msg.to != constants.CREATE_CONTRACT_ADDRESS:
-        if computation.is_error or ancestor_had_error:
-            # collect RIPEMD160 precompile even if ancestor computation had error;
-            # otherwise, skip collection from children of errored-out computations;
-            # if there were no special-casing for RIPEMD160, we'd simply `pass` here
-            if computation.msg.to == THREE:
-                yield computation.msg.to
-        else:
+        if (
+            (computation.is_error or ancestor_had_error)
+            and computation.msg.to == THREE
+            or not computation.is_error
+            and not ancestor_had_error
+        ):
             yield computation.msg.to
-
     # recurse into nested computations (even errored ones, since looking for RIPEMD160)
     for child in computation.children:
         yield from collect_touched_accounts(

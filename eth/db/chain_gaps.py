@@ -140,7 +140,7 @@ def fill_gap(newly_persisted: BlockNumber, base_gaps: ChainGaps) -> GapInfo:
                 f"1st gap is {first_match[1]}, 2nd gap is {second_match[1]}",
                 f"all matching gaps: {matching_gaps}",
             )
-        elif len(matching_gaps) == 0:
+        elif not matching_gaps:
             # Looks like we are just overwriting an existing header.
             return GapChange.NoChange, base_gaps
         elif len(matching_gaps) == 1:

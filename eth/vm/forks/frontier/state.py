@@ -105,7 +105,7 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
             encode_hex(keccak(transaction.data)),
         )
 
-        message = Message(
+        return Message(
             gas=message_gas,
             to=transaction.to,
             sender=transaction.sender,
@@ -114,16 +114,15 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
             code=code,
             create_address=contract_address,
         )
-        return message
 
     def build_computation(
         self, message: MessageAPI, transaction: SignedTransactionAPI
     ) -> ComputationAPI:
         transaction_context = self.vm_state.get_transaction_context(transaction)
         if message.is_create:
-            is_collision = self.vm_state.has_code_or_nonce(message.storage_address)
-
-            if is_collision:
+            if is_collision := self.vm_state.has_code_or_nonce(
+                message.storage_address
+            ):
                 # The address of the newly created contract has *somehow* collided
                 # with an existing contract address.
                 computation = self.vm_state.get_computation(
@@ -154,9 +153,7 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
 
     @classmethod
     def calculate_gas_refund(cls, computation: ComputationAPI, gas_used: int) -> int:
-        # Self Destruct Refunds
-        num_deletions = len(computation.get_accounts_for_deletion())
-        if num_deletions:
+        if num_deletions := len(computation.get_accounts_for_deletion()):
             computation.refund_gas(REFUND_SELFDESTRUCT * num_deletions)
 
         # Gas Refunds
@@ -172,9 +169,10 @@ class FrontierTransactionExecutor(BaseTransactionExecutor):
         gas_remaining = computation.get_gas_remaining()
         gas_used = transaction.gas - gas_remaining
         gas_refund = self.calculate_gas_refund(computation, gas_used)
-        gas_refund_amount = (gas_refund + gas_remaining) * transaction_context.gas_price
-
-        if gas_refund_amount:
+        if (
+            gas_refund_amount := (gas_refund + gas_remaining)
+            * transaction_context.gas_price
+        ):
             self.vm_state.logger.debug2(
                 "TRANSACTION REFUND: %s -> %s",
                 gas_refund_amount,

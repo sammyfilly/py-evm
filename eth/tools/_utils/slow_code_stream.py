@@ -59,10 +59,7 @@ class SlowCodeStream:
             yield STOP
 
     def __next__(self) -> int:
-        # a very performance-sensitive method
-        next_opcode_as_byte = self._bound_stream_read(1)
-
-        if next_opcode_as_byte:
+        if next_opcode_as_byte := self._bound_stream_read(1):
             return ord(next_opcode_as_byte)
         else:
             return STOP
@@ -106,9 +103,7 @@ class SlowCodeStream:
                 yield earlier_position
 
     def is_valid_opcode(self, position: int) -> bool:
-        if position >= self._length_cache:
-            return False
-        elif position in self.invalid_positions:
+        if position >= self._length_cache or position in self.invalid_positions:
             return False
         elif position in self.valid_positions:
             return True

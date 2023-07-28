@@ -125,10 +125,9 @@ class SnapshotManager:
                     if tally.action is VoteAction.NOMINATE:
                         snapshot.signers.append(header.coinbase)
                         self.logger.debug("New signer added: %s", header.coinbase)
-                    else:
-                        if header.coinbase in snapshot.signers:
-                            snapshot.signers.remove(header.coinbase)
-                            self.logger.debug("Signer removed: %s", header.coinbase)
+                    elif header.coinbase in snapshot.signers:
+                        snapshot.signers.remove(header.coinbase)
+                        self.logger.debug("Signer removed: %s", header.coinbase)
 
                     for vote in snapshot.votes.copy():
                         # Discard any pending votes *from* the added or removed member

@@ -54,14 +54,14 @@ def add_transaction_to_group(
     indexes = {}
     for key, index_key in [("data", "data"), ("gasLimit", "gas"), ("value", "value")]:
         if key in group:
-            if key not in transaction:
-                if len(new_group[key]) != 1:
-                    raise ValueError(f"Can't add transaction as {key} is ambiguous")
-                index = 0
-            else:
+            if key in transaction:
                 if transaction[key] not in new_group[key]:  # type: ignore # https://github.com/python/mypy/issues/5359 # noqa: 501
                     new_group[key].append(transaction[key])  # type: ignore # https://github.com/python/mypy/issues/5359 # noqa: 501
                 index = new_group[key].index(transaction[key])  # type: ignore # https://github.com/python/mypy/issues/5359 # noqa: 501
+            elif len(new_group[key]) != 1:
+                raise ValueError(f"Can't add transaction as {key} is ambiguous")
+            else:
+                index = 0
             indexes[index_key] = index
         else:
             assert key not in transaction

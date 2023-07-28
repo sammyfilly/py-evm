@@ -82,10 +82,7 @@ def normalize_int(value: IntConvertible) -> int:
     elif is_hex(value) and is_0x_prefixed(value):  # type: ignore
         # mypy doesn't recognize that is_hex() forces value to be a str
         value = cast(str, value)
-        if len(value) == 2:
-            return 0
-        else:
-            return int(value, 16)
+        return 0 if len(value) == 2 else int(value, 16)
     elif is_string(value):
         return int(value)
     else:
@@ -110,20 +107,14 @@ def to_int(value: str) -> int:
     and special cases like `0x`.
     """
     if is_0x_prefixed(value):
-        if len(value) == 2:
-            return 0
-        else:
-            return int(value, 16)
+        return 0 if len(value) == 2 else int(value, 16)
     else:
         return int(value)
 
 
 @functools.lru_cache(maxsize=128)
 def normalize_to_address(value: AnyStr) -> Address:
-    if value:
-        return to_canonical_address(value)
-    else:
-        return CREATE_CONTRACT_ADDRESS
+    return to_canonical_address(value) if value else CREATE_CONTRACT_ADDRESS
 
 
 robust_decode_hex = hexstr_if_str(to_bytes)
@@ -219,8 +210,7 @@ def state_definition_to_dict(state_definition: GeneralState) -> AccountState:
         assert TypeError("State definition must either be a mapping or a sequence")
 
     seen_keys = set(concat(d.keys() for d in state_dict.values()))
-    bad_keys = seen_keys - {"balance", "nonce", "storage", "code"}
-    if bad_keys:
+    if bad_keys := seen_keys - {"balance", "nonce", "storage", "code"}:
         raise ValidationError(
             "State definition contains the following invalid "
             f"account fields: {', '.join(bad_keys)}"
@@ -412,10 +402,7 @@ def normalize_account_state(account_state: FixtureAccountState) -> AccountState:
 def normalize_post_state(postate: FixtureAccountState) -> AccountState:
     # poststate might not be present in some fixtures
     # https://github.com/ethereum/tests/issues/637#issuecomment-534072897
-    if postate is None:
-        return {}
-    else:
-        return normalize_account_state(postate)
+    return {} if postate is None else normalize_account_state(postate)
 
 
 @to_dict
@@ -433,7 +420,7 @@ def normalize_statetest_fixture(
 ) -> Dict[str, Any]:
     post_state = fixture["post"][fork][post_state_index]
 
-    normalized_fixture = {
+    return {
         "env": normalize_environment(fixture["env"]),
         "pre": normalize_account_state(fixture["pre"]),
         "post": normalize_post_state_hash(post_state),
@@ -442,8 +429,6 @@ def normalize_statetest_fixture(
             post_state["indexes"],
         ),
     }
-
-    return normalized_fixture
 
 
 def normalize_exec(exec_params: Dict[str, Any]) -> Dict[str, Any]:

@@ -48,33 +48,29 @@ class HomesteadComputation(FrontierComputation):
 
         if computation.is_error:
             state.revert(snapshot)
-            return computation
-        else:
-            contract_code = computation.output
-
-            if contract_code:
-                contract_code_gas_cost = len(contract_code) * constants.GAS_CODEDEPOSIT
-                try:
-                    computation.consume_gas(
-                        contract_code_gas_cost,
-                        reason="Write contract code for CREATE",
-                    )
-                except OutOfGas as err:
-                    # Different from Frontier: reverts state on gas failure while
-                    # writing contract code.
-                    computation.error = err
-                    state.revert(snapshot)
-                else:
-                    if cls.logger:
-                        cls.logger.debug2(
-                            "SETTING CODE: %s -> length: %s | hash: %s",
-                            encode_hex(message.storage_address),
-                            len(contract_code),
-                            encode_hex(keccak(contract_code)),
-                        )
-
-                    state.set_code(message.storage_address, contract_code)
-                    state.commit(snapshot)
+        elif contract_code := computation.output:
+            contract_code_gas_cost = len(contract_code) * constants.GAS_CODEDEPOSIT
+            try:
+                computation.consume_gas(
+                    contract_code_gas_cost,
+                    reason="Write contract code for CREATE",
+                )
+            except OutOfGas as err:
+                # Different from Frontier: reverts state on gas failure while
+                # writing contract code.
+                computation.error = err
+                state.revert(snapshot)
             else:
+                if cls.logger:
+                    cls.logger.debug2(
+                        "SETTING CODE: %s -> length: %s | hash: %s",
+                        encode_hex(message.storage_address),
+                        len(contract_code),
+                        encode_hex(keccak(contract_code)),
+                    )
+
+                state.set_code(message.storage_address, contract_code)
                 state.commit(snapshot)
-            return computation
+        else:
+            state.commit(snapshot)
+        return computation

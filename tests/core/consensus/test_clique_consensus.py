@@ -209,8 +209,7 @@ def alice_nominates_bob_and_ron_then_they_kick_her(chain):
     header = make_next_header(chain, header, RON_PK, ALICE, NONCE_DROP)
     yield header
 
-    header = make_next_header(chain, header, BOB_PK)
-    yield header
+    yield make_next_header(chain, header, BOB_PK)
 
 
 def validate_seal_and_get_snapshot(clique, header):
@@ -232,20 +231,15 @@ def paragon_chain(base_db):
     )
     clique_vms = CliqueApplier().amend_vm_configuration(vms)
 
-    chain = MiningChain.configure(
+    return MiningChain.configure(
         vm_configuration=clique_vms,
         consensus_context_class=CliqueConsensusContext,
         chain_id=5,
     ).from_genesis(base_db, PARAGON_GENESIS_PARAMS, PARAGON_GENESIS_STATE)
-    return chain
 
 
 def get_clique(chain, header=None):
-    if header:
-        vm = chain.get_vm(header)
-    else:
-        vm = chain.get_vm()
-
+    vm = chain.get_vm(header) if header else chain.get_vm()
     clique = vm._consensus
     assert isinstance(clique, CliqueConsensus)
     return clique

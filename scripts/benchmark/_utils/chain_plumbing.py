@@ -94,13 +94,14 @@ def get_chain(
 ) -> Iterable[MiningChain]:
     with tempfile.TemporaryDirectory() as temp_dir:
         level_db_obj = LevelDB(Path(temp_dir))
-        level_db_chain = build(
+        yield build(
             MiningChain,
             fork_at(vm, constants.GENESIS_BLOCK_NUMBER),
             disable_pow_check(),
-            genesis(db=level_db_obj, params=GENESIS_PARAMS, state=genesis_state),
+            genesis(
+                db=level_db_obj, params=GENESIS_PARAMS, state=genesis_state
+            ),
         )
-        yield level_db_chain
 
 
 def get_all_chains(

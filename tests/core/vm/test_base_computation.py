@@ -36,7 +36,7 @@ class DummyTransactionContext(BaseTransactionContext):
 
 @pytest.fixture
 def message(canonical_address_a, canonical_address_b):
-    message = Message(
+    return Message(
         to=canonical_address_a,
         sender=canonical_address_b,
         value=100,
@@ -44,25 +44,22 @@ def message(canonical_address_a, canonical_address_b):
         code=b"",
         gas=100,
     )
-    return message
 
 
 @pytest.fixture
 def computation(message, transaction_context):
-    computation = DummyComputation(
+    return DummyComputation(
         state=None,
         message=message,
         transaction_context=transaction_context,
     )
-    return computation
 
 
 @pytest.fixture
 def child_message(computation, canonical_address_b):
-    child_message = computation.prepare_child_message(
+    return computation.prepare_child_message(
         gas=100, to=canonical_address_b, value=200, data=b"", code=b""
     )
-    return child_message
 
 
 def test_is_origin_computation(computation, transaction_context, canonical_address_a):
@@ -207,8 +204,8 @@ def test_add_log_entry_raises_if_data_isnt_in_bytes(computation, canonical_addre
 def test_add_log_entry(computation, canonical_address_a):
     # Adds log entry to log entries
     computation.add_log_entry(canonical_address_a, [1, 2, 3], b"")
-    assert computation.get_log_entries() == tuple(
-        [(b"\x0fW.R\x95\xc5\x7f\x15\x88o\x9b&>/m-l\x7b^\xc6", [1, 2, 3], b"")]
+    assert computation.get_log_entries() == (
+        (b"\x0fW.R\x95\xc5\x7f\x15\x88o\x9b&>/m-l\x7b^\xc6", [1, 2, 3], b""),
     )
     # Can add multiple entries
     computation.add_log_entry(canonical_address_a, [4, 5, 6], b"2")

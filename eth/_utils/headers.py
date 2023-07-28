@@ -45,14 +45,14 @@ def new_timestamp_from_parent(parent: Optional[BlockHeaderAPI]) -> int:
     or less than parent), return `parent.timestamp + 1`. If parent is None,
     then consider this a genesis block.
     """
-    if parent is None:
-        return eth_now()
-    else:
-        # header timestamps must increment
-        return max(
+    return (
+        eth_now()
+        if parent is None
+        else max(
             parent.timestamp + 1,
             eth_now(),
         )
+    )
 
 
 def fill_header_params_from_parent(

@@ -1722,7 +1722,7 @@ def test_selfdestruct_issues_deprecation_warning_for_shanghai():
         if k != opcode_values.SELFDESTRUCT
     }
     code_without_self_destruct = assemble(
-        *[opc for opc in vm_opcodes_without_selfdestruct.keys()]
+        *list(vm_opcodes_without_selfdestruct.keys())
     )
 
     # assert no warning using every opcode except selfdestruct

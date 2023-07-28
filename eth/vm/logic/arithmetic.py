@@ -32,11 +32,7 @@ def addmod(computation: ComputationAPI) -> None:
     """
     left, right, mod = computation.stack_pop_ints(3)
 
-    if mod == 0:
-        result = 0
-    else:
-        result = (left + right) % mod
-
+    result = 0 if mod == 0 else (left + right) % mod
     computation.stack_push_int(result)
 
 
@@ -57,11 +53,7 @@ def mod(computation: ComputationAPI) -> None:
     """
     value, mod = computation.stack_pop_ints(2)
 
-    if mod == 0:
-        result = 0
-    else:
-        result = value % mod
-
+    result = 0 if mod == 0 else value % mod
     computation.stack_push_int(result)
 
 
@@ -101,10 +93,7 @@ def mulmod(computation: ComputationAPI) -> None:
     """
     left, right, mod = computation.stack_pop_ints(3)
 
-    if mod == 0:
-        result = 0
-    else:
-        result = (left * right) % mod
+    result = 0 if mod == 0 else (left * right) % mod
     computation.stack_push_int(result)
 
 

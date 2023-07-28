@@ -139,12 +139,10 @@ class Create(Opcode):
         creation_nonce = computation.state.get_nonce(computation.msg.storage_address)
         computation.state.increment_nonce(computation.msg.storage_address)
 
-        contract_address = generate_contract_address(
+        return generate_contract_address(
             computation.msg.storage_address,
             creation_nonce,
         )
-
-        return contract_address
 
     def get_stack_data(self, computation: ComputationAPI) -> CreateOpcodeStackData:
         endowment, memory_start, memory_length = computation.stack_pop_ints(3)
@@ -177,12 +175,8 @@ class Create(Opcode):
                 )
             elif stack_too_deep:
                 self.logger.debug2(f"{self.mnemonic} failure: Stack limit reached")
-            elif nonce_too_high:
-                self.logger.debug2(f"{self.mnemonic} failure: Nonce too high")
             else:
-                raise RuntimeError(
-                    "Invariant: error must be insufficient funds or stack too deep"
-                )
+                self.logger.debug2(f"{self.mnemonic} failure: Nonce too high")
             return
 
         call_data = computation.memory_read_bytes(
@@ -196,9 +190,7 @@ class Create(Opcode):
             stack_data, call_data, computation
         )
 
-        is_collision = computation.state.has_code_or_nonce(contract_address)
-
-        if is_collision:
+        if is_collision := computation.state.has_code_or_nonce(contract_address):
             computation.stack_push_int(0)
             computation.return_data = b""
             self.logger.debug2(

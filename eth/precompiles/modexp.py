@@ -77,22 +77,18 @@ def _compute_modexp_gas_fee_eip_198(data: bytes) -> int:
     )
     complexity = _compute_complexity(max(modulus_length, base_length))
 
-    gas_fee = (
+    return (
         complexity
         * max(adjusted_exponent_length, 1)
         // constants.GAS_MOD_EXP_QUADRATIC_DENOMINATOR
     )
-    return gas_fee
 
 
 def _modexp(data: bytes) -> int:
     base_length, exponent_length, modulus_length = extract_lengths(data)
 
-    if base_length == 0:
+    if base_length == 0 or modulus_length == 0:
         return 0
-    elif modulus_length == 0:
-        return 0
-
     # compute start:end indexes
     base_end_idx = 96 + base_length
     exponent_end_idx = base_end_idx + exponent_length
@@ -116,9 +112,7 @@ def _modexp(data: bytes) -> int:
     )
     exponent = big_endian_to_int(exponent_bytes)
 
-    result = pow(base, exponent, modulus)
-
-    return result
+    return pow(base, exponent, modulus)
 
 
 @curry

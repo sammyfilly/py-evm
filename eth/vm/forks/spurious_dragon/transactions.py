@@ -36,15 +36,7 @@ class SpuriousDragonTransaction(HomesteadTransaction):
             return super().y_parity
 
     def get_message_for_signing(self) -> bytes:
-        if is_eip_155_signed_transaction(self):
-            txn_parts = rlp.decode(rlp.encode(self))
-            txn_parts_for_signing = txn_parts[:-3] + [
-                int_to_big_endian(self.chain_id),
-                b"",
-                b"",
-            ]
-            return rlp.encode(txn_parts_for_signing)
-        else:
+        if not is_eip_155_signed_transaction(self):
             return rlp.encode(
                 SpuriousDragonUnsignedTransaction(
                     nonce=self.nonce,
@@ -55,6 +47,13 @@ class SpuriousDragonTransaction(HomesteadTransaction):
                     data=self.data,
                 )
             )
+        txn_parts = rlp.decode(rlp.encode(self))
+        txn_parts_for_signing = txn_parts[:-3] + [
+            int_to_big_endian(self.chain_id),
+            b"",
+            b"",
+        ]
+        return rlp.encode(txn_parts_for_signing)
 
     @classmethod
     def create_unsigned_transaction(
@@ -78,17 +77,11 @@ class SpuriousDragonTransaction(HomesteadTransaction):
 
     @property
     def v_min(self) -> int:
-        if is_eip_155_signed_transaction(self):
-            return 35 + (2 * self.chain_id)
-        else:
-            return 27
+        return 35 + (2 * self.chain_id) if is_eip_155_signed_transaction(self) else 27
 
     @property
     def v_max(self) -> int:
-        if is_eip_155_signed_transaction(self):
-            return 36 + (2 * self.chain_id)
-        else:
-            return 28
+        return 36 + (2 * self.chain_id) if is_eip_155_signed_transaction(self) else 28
 
 
 class SpuriousDragonUnsignedTransaction(HomesteadUnsignedTransaction):

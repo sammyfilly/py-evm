@@ -306,14 +306,13 @@ class AccountDB(AccountDatabaseAPI):
         code_hash = self.get_code_hash(address)
         if code_hash == EMPTY_SHA3:
             return b""
-        else:
-            try:
-                return self._journaldb[code_hash]
-            except KeyError:
-                raise MissingBytecode(code_hash) from KeyError
-            finally:
-                if code_hash in self._get_accessed_node_hashes():
-                    self._accessed_bytecodes.add(address)
+        try:
+            return self._journaldb[code_hash]
+        except KeyError:
+            raise MissingBytecode(code_hash) from KeyError
+        finally:
+            if code_hash in self._get_accessed_node_hashes():
+                self._accessed_bytecodes.add(address)
 
     def set_code(self, address: Address, code: bytes) -> None:
         validate_canonical_address(address, title="Storage Address")
@@ -401,9 +400,7 @@ class AccountDB(AccountDatabaseAPI):
         if from_journal and address in self._account_cache:
             return self._account_cache[address]
 
-        rlp_account = self._get_encoded_account(address, from_journal)
-
-        if rlp_account:
+        if rlp_account := self._get_encoded_account(address, from_journal):
             account = rlp.decode(rlp_account, sedes=Account)
         else:
             account = Account()
@@ -559,13 +556,11 @@ class AccountDB(AccountDatabaseAPI):
         return MetaWitness(self._get_accessed_node_hashes(), self._get_access_list())
 
     def _validate_generated_root(self) -> None:
-        db_diff = self._journaldb.diff()
-        if db_diff:
+        if db_diff := self._journaldb.diff():
             raise ValidationError(
                 f"AccountDB had a dirty db when it needed to be clean: {db_diff!r}"
             )
-        trie_diff = self._journaltrie.diff()
-        if trie_diff:
+        if trie_diff := self._journaltrie.diff():
             raise ValidationError(
                 f"AccountDB had a dirty trie when it needed to be clean: {trie_diff!r}"
             )

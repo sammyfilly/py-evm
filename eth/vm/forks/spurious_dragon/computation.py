@@ -58,41 +58,37 @@ class SpuriousDragonComputation(HomesteadComputation):
 
         if computation.is_error:
             state.revert(snapshot)
-            return computation
-        else:
-            contract_code = computation.output
+        elif contract_code := computation.output:
+            try:
+                cls.validate_contract_code(contract_code)
 
-            if contract_code:
-                try:
-                    cls.validate_contract_code(contract_code)
-
-                    contract_code_gas_cost = (
-                        len(contract_code) * constants.GAS_CODEDEPOSIT
-                    )
-                    computation.consume_gas(
-                        contract_code_gas_cost,
-                        reason="Write contract code for CREATE",
-                    )
-                except VMError as err:
-                    # Different from Frontier: reverts state on gas failure while
-                    # writing contract code.
-                    computation.error = err
-                    state.revert(snapshot)
-                    cls.logger.debug2(f"VMError setting contract code: {err}")
-                else:
-                    if cls.logger:
-                        cls.logger.debug2(
-                            "SETTING CODE: %s -> length: %s | hash: %s",
-                            encode_hex(message.storage_address),
-                            len(contract_code),
-                            encode_hex(keccak(contract_code)),
-                        )
-
-                    state.set_code(message.storage_address, contract_code)
-                    state.commit(snapshot)
+                contract_code_gas_cost = (
+                    len(contract_code) * constants.GAS_CODEDEPOSIT
+                )
+                computation.consume_gas(
+                    contract_code_gas_cost,
+                    reason="Write contract code for CREATE",
+                )
+            except VMError as err:
+                # Different from Frontier: reverts state on gas failure while
+                # writing contract code.
+                computation.error = err
+                state.revert(snapshot)
+                cls.logger.debug2(f"VMError setting contract code: {err}")
             else:
+                if cls.logger:
+                    cls.logger.debug2(
+                        "SETTING CODE: %s -> length: %s | hash: %s",
+                        encode_hex(message.storage_address),
+                        len(contract_code),
+                        encode_hex(keccak(contract_code)),
+                    )
+
+                state.set_code(message.storage_address, contract_code)
                 state.commit(snapshot)
-            return computation
+        else:
+            state.commit(snapshot)
+        return computation
 
     @classmethod
     def validate_create_message(cls, message: MessageAPI) -> None:

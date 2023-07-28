@@ -125,10 +125,7 @@ class VM(Configurable, VirtualMachineAPI):
         self._initial_header = header
 
     def get_header(self) -> BlockHeaderAPI:
-        if self._block is None:
-            return self._initial_header
-        else:
-            return self._block.header
+        return self._initial_header if self._block is None else self._block.header
 
     def get_block(self) -> BlockAPI:
         if self._block is None:
@@ -513,9 +510,7 @@ class VM(Configurable, VirtualMachineAPI):
 
         provided_fields = set(kwargs.keys())
         known_fields = set(BlockHeader._meta.field_names)
-        unknown_fields = provided_fields.difference(known_fields)
-
-        if unknown_fields:
+        if unknown_fields := provided_fields.difference(known_fields):
             raise AttributeError(
                 f"Unable to set the field(s) {', '.join(known_fields)} "
                 "on the `BlockHeader` class. "
@@ -524,9 +519,7 @@ class VM(Configurable, VirtualMachineAPI):
 
         header: BlockHeaderAPI = block.header.copy(**kwargs)
 
-        packed_block = block.copy(uncles=uncles, header=header)
-
-        return packed_block
+        return block.copy(uncles=uncles, header=header)
 
     #
     # Blocks
@@ -536,12 +529,11 @@ class VM(Configurable, VirtualMachineAPI):
         cls, parent_header: BlockHeaderAPI, coinbase: Address
     ) -> BlockAPI:
         block_header = cls.create_header_from_parent(parent_header, coinbase=coinbase)
-        block = cls.get_block_class()(
+        return cls.get_block_class()(
             block_header,
             transactions=[],
             uncles=[],
         )
-        return block
 
     @classmethod
     def create_genesis_header(cls, **genesis_params: Any) -> BlockHeaderAPI:
@@ -663,7 +655,7 @@ class VM(Configurable, VirtualMachineAPI):
 
         if not self.chaindb.exists(block.header.state_root):
             # If not in the db, check if the current state root matches.
-            if not self.state.make_state_root() == block.header.state_root:
+            if self.state.make_state_root() != block.header.state_root:
                 raise ValidationError(
                     "`state_root` does not match or was not found in the db.\n"
                     f"- state_root: {block.header.state_root!r}"
@@ -688,30 +680,29 @@ class VM(Configurable, VirtualMachineAPI):
             raise ValidationError(
                 "Must have access to parent header to validate current header"
             )
-        else:
-            validate_length_lte(
-                header.extra_data,
-                cls.extra_data_max_bytes,
-                title="BlockHeader.extra_data",
+        validate_length_lte(
+            header.extra_data,
+            cls.extra_data_max_bytes,
+            title="BlockHeader.extra_data",
+        )
+
+        cls.validate_gas(header, parent_header)
+
+        if header.block_number != parent_header.block_number + 1:
+            raise ValidationError(
+                "Blocks must be numbered consecutively. "
+                f"Block number #{header.block_number} "
+                f"has parent #{parent_header.block_number}"
             )
 
-            cls.validate_gas(header, parent_header)
-
-            if header.block_number != parent_header.block_number + 1:
-                raise ValidationError(
-                    "Blocks must be numbered consecutively. "
-                    f"Block number #{header.block_number} "
-                    f"has parent #{parent_header.block_number}"
-                )
-
-            # timestamp
-            if header.timestamp <= parent_header.timestamp:
-                raise ValidationError(
-                    "timestamp must be strictly later than parent, "
-                    f"but is {parent_header.timestamp - header.timestamp} seconds before.\n"  # noqa: E501
-                    f"- child  : {header.timestamp}\n"
-                    f"- parent : {parent_header.timestamp}. "
-                )
+        # timestamp
+        if header.timestamp <= parent_header.timestamp:
+            raise ValidationError(
+                "timestamp must be strictly later than parent, "
+                f"but is {parent_header.timestamp - header.timestamp} seconds before.\n"  # noqa: E501
+                f"- child  : {header.timestamp}\n"
+                f"- parent : {parent_header.timestamp}. "
+            )
 
     @classmethod
     def validate_gas(

@@ -123,10 +123,7 @@ class DBDiff(ABC_Mapping):
     def __init__(
         self, changes: Dict[bytes, Union[bytes, MissingReason]] = None
     ) -> None:
-        if changes is None:
-            self._changes = {}
-        else:
-            self._changes = changes
+        self._changes = {} if changes is None else changes
 
     def __getitem__(self, key: bytes) -> bytes:
         result = self._changes.get(key, NEVER_INSERTED)
@@ -143,10 +140,7 @@ class DBDiff(ABC_Mapping):
         )
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, DBDiff):
-            return False
-        else:
-            return self._changes == other._changes
+        return self._changes == other._changes if isinstance(other, DBDiff) else False
 
     def __repr__(self) -> str:
         deleted = [
@@ -212,8 +206,6 @@ class DBDiff(ABC_Mapping):
                         raise
                     except KeyError:
                         pass
-                else:
-                    pass
             else:
                 db[key] = value  # type: ignore # ignore over cast for perf reasons
 

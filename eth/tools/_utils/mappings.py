@@ -46,11 +46,10 @@ def is_cleanly_mergable(*dicts: Dict[Any, Any]) -> bool:
     elif len(dicts) == 2:
         if not all(isinstance(d, Mapping) for d in dicts):
             return False
-        else:
-            shared_keys = set(dicts[0].keys()) & set(dicts[1].keys())
-            return all(
-                is_cleanly_mergable(dicts[0][key], dicts[1][key]) for key in shared_keys
-            )
+        shared_keys = set(dicts[0].keys()) & set(dicts[1].keys())
+        return all(
+            is_cleanly_mergable(dicts[0][key], dicts[1][key]) for key in shared_keys
+        )
     else:
         dict_combinations = itertools.combinations(dicts, 2)
         return all(

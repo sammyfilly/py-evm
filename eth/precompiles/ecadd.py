@@ -68,5 +68,4 @@ def _ecadd(data: bytes) -> Tuple[bn128.FQ, bn128.FQ]:
     p1 = validate_point(x1, y1)
     p2 = validate_point(x2, y2)
 
-    result = bn128.normalize(bn128.add(p1, p2))
-    return result
+    return bn128.normalize(bn128.add(p1, p2))

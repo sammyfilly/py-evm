@@ -328,5 +328,4 @@ class BaseTransactionExecutor(TransactionExecutorAPI):
         self.validate_transaction(transaction)
         message = self.build_evm_message(transaction)
         computation = self.build_computation(message, transaction)
-        finalized_computation = self.finalize_computation(transaction, computation)
-        return finalized_computation
+        return self.finalize_computation(transaction, computation)

@@ -48,12 +48,11 @@ def calculate_expected_base_fee_per_gas(parent_header: BlockHeaderAPI) -> int:
     if parent_header is None:
         # Parent is empty when making the genesis header
         return INITIAL_BASE_FEE
-    else:
-        try:
-            parent_base_fee_per_gas = parent_header.base_fee_per_gas
-        except AttributeError:
-            # Parent is a non-London header
-            return INITIAL_BASE_FEE
+    try:
+        parent_base_fee_per_gas = parent_header.base_fee_per_gas
+    except AttributeError:
+        # Parent is a non-London header
+        return INITIAL_BASE_FEE
 
     # Parent *is* a London header
     parent_gas_target = parent_header.gas_limit // ELASTICITY_MULTIPLIER
@@ -123,20 +122,15 @@ def create_london_header_from_parent(
     calculated_fee_per_gas = calculate_expected_base_fee_per_gas(parent_header)
     if configured_fee_per_gas is None:
         all_fields["base_fee_per_gas"] = calculated_fee_per_gas
+    elif parent_header is None or configured_fee_per_gas == calculated_fee_per_gas:
+        all_fields["base_fee_per_gas"] = configured_fee_per_gas
     else:
-        # Must not configure an invalid base fee. So verify that either:
-        #   1. This is the genesis header, or
-        #   2. The configured value matches the calculated value from the parent
-        if parent_header is None or configured_fee_per_gas == calculated_fee_per_gas:
-            all_fields["base_fee_per_gas"] = configured_fee_per_gas
-        else:
-            raise ValidationError(
-                f"Cannot select an invalid base_fee_per_gas of:"
-                f" {configured_fee_per_gas}, expected: {calculated_fee_per_gas}"
-            )
+        raise ValidationError(
+            f"Cannot select an invalid base_fee_per_gas of:"
+            f" {configured_fee_per_gas}, expected: {calculated_fee_per_gas}"
+        )
 
-    new_header = LondonBlockHeader(**all_fields)  # type:ignore
-    return new_header
+    return LondonBlockHeader(**all_fields)
 
 
 compute_london_difficulty = compute_difficulty(9700000)

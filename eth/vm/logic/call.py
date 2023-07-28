@@ -90,10 +90,7 @@ class BaseCall(Opcode, ABC):
         #
         # Message gas allocation and fees
         #
-        if code_address:
-            code_source = code_address
-        else:
-            code_source = to
+        code_source = code_address if code_address else to
         load_account_fee = self.get_account_load_fee(computation, code_source)
         if load_account_fee > 0:
             computation.consume_gas(
@@ -118,20 +115,23 @@ class BaseCall(Opcode, ABC):
         # Pre-call checks
         sender_balance = computation.state.get_balance(computation.msg.storage_address)
 
-        insufficient_funds = should_transfer_value and sender_balance < value
         stack_too_deep = computation.msg.depth + 1 > constants.STACK_DEPTH_LIMIT
 
-        if insufficient_funds or stack_too_deep:
+        if insufficient_funds := should_transfer_value and sender_balance < value:
             computation.return_data = b""
-            if insufficient_funds:
-                err_message = (
-                    f"Insufficient Funds: have: {sender_balance} | need: {value}"
-                )
-            elif stack_too_deep:
-                err_message = "Stack Limit Reached"
-            else:
-                raise Exception("Invariant: Unreachable code path")
-
+            err_message = (
+                f"Insufficient Funds: have: {sender_balance} | need: {value}"
+            )
+            self.logger.debug2(
+                "%s failure: %s",
+                self.mnemonic,
+                err_message,
+            )
+            computation.return_gas(child_msg_gas)
+            computation.stack_push_int(0)
+        elif stack_too_deep:
+            computation.return_data = b""
+            err_message = "Stack Limit Reached"
             self.logger.debug2(
                 "%s failure: %s",
                 self.mnemonic,

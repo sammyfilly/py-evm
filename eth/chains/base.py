@@ -309,11 +309,10 @@ class Chain(BaseChain):
         Return ``header`` if it is not ``None``, otherwise return the header
         of the canonical head.
         """
-        if header is None:
-            head = self.get_canonical_head()
-            return self.create_header_from_parent(head)
-        else:
+        if header is not None:
             return header
+        head = self.get_canonical_head()
+        return self.create_header_from_parent(head)
 
     #
     # Block API
@@ -461,13 +460,11 @@ class Chain(BaseChain):
     ) -> ReceiptAPI:
         vm = self.get_vm_class_for_block_number(block_number)
 
-        receipt = self.chaindb.get_receipt_by_index(
+        return self.chaindb.get_receipt_by_index(
             block_number,
             index,
             vm.get_receipt_builder(),
         )
-
-        return receipt
 
     #
     # Execution API
@@ -584,25 +581,23 @@ class Chain(BaseChain):
             raise ValidationError(
                 "Block has uncles but header suggests uncles should be empty"
             )
-        elif should_have_uncles and not has_uncles:
+        elif not has_uncles:
             raise ValidationError(
                 "Header suggests block should have uncles but block has none"
             )
 
         # Check for duplicates
         uncle_groups = groupby(operator.attrgetter("hash"), block.uncles)
-        duplicate_uncles = tuple(
+        if duplicate_uncles := tuple(
             sorted(hash for hash, twins in uncle_groups.items() if len(twins) > 1)
-        )
-        if duplicate_uncles:
+        ):
             raise ValidationError(
                 "Block contains duplicate uncles:\n"
                 f" - {' - '.join(duplicate_uncles)}"
             )
 
         recent_ancestors = tuple(
-            ancestor
-            for ancestor in self.get_ancestors(MAX_UNCLE_DEPTH + 1, header=block.header)
+            self.get_ancestors(MAX_UNCLE_DEPTH + 1, header=block.header)
         )
         recent_ancestor_hashes = {ancestor.hash for ancestor in recent_ancestors}
         recent_uncle_hashes = _extract_uncle_hashes(recent_ancestors)

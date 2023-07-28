@@ -184,8 +184,7 @@ def _chain_with_block_validation(VM, base_db, genesis_state, chain_cls=Chain):
         ),
         chain_id=1337,
     )
-    chain = klass.from_genesis(base_db, _get_genesis_defaults(), genesis_state)
-    return chain
+    return klass.from_genesis(base_db, _get_genesis_defaults(), genesis_state)
 
 
 @pytest.fixture
@@ -255,8 +254,7 @@ def _chain_without_block_validation(request, VM, base_db, genesis_state):
         chain_id=1337,
         **overrides,
     )
-    chain = klass.from_genesis(base_db, _get_genesis_defaults(), genesis_state)
-    return chain
+    return klass.from_genesis(base_db, _get_genesis_defaults(), genesis_state)
 
 
 @pytest.fixture(params=[Chain, MiningChain])

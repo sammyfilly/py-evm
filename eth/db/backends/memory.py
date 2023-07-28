@@ -12,10 +12,7 @@ class MemoryDB(BaseDB):
     kv_store: Dict[bytes, bytes] = None
 
     def __init__(self, kv_store: Dict[bytes, bytes] = None) -> None:
-        if kv_store is None:
-            self.kv_store = {}
-        else:
-            self.kv_store = kv_store
+        self.kv_store = {} if kv_store is None else kv_store
 
     def __getitem__(self, key: bytes) -> bytes:
         return self.kv_store[key]

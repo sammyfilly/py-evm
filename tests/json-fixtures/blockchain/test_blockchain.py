@@ -1207,12 +1207,11 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture
 def fixture(fixture_data):
     fixture_path, fixture_key, fixture_fork = fixture_data
-    fixture = load_fixture(
+    return load_fixture(
         fixture_path,
         fixture_key,
         normalize_blockchain_fixtures,
     )
-    return fixture
 
 
 def assert_imported_genesis_header_unchanged(genesis_fields, genesis_header):

@@ -35,10 +35,7 @@ class AtomicDB(BaseAtomicDB):
     _track_diff: DBDiffTracker = None
 
     def __init__(self, wrapped_db: DatabaseAPI = None) -> None:
-        if wrapped_db is None:
-            self.wrapped_db = MemoryDB()
-        else:
-            self.wrapped_db = wrapped_db
+        self.wrapped_db = MemoryDB() if wrapped_db is None else wrapped_db
 
     def __getitem__(self, key: bytes) -> bytes:
         return self.wrapped_db[key]

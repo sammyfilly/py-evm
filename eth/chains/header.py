@@ -38,10 +38,7 @@ class HeaderChain(Configurable, HeaderChainAPI):
         self.base_db = base_db
         self.headerdb = self.get_headerdb_class()(base_db)
 
-        if header is None:
-            self.header = self.get_canonical_head()
-        else:
-            self.header = header
+        self.header = self.get_canonical_head() if header is None else header
 
     #
     # Chain Initialization API
