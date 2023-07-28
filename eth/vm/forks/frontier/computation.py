@@ -106,12 +106,8 @@ class FrontierComputation(BaseComputation):
     ) -> ComputationAPI:
         computation = cls.apply_message(state, message, transaction_context)
 
-        if computation.is_error:
-            return computation
-        else:
-            contract_code = computation.output
-
-            if contract_code:
+        if not computation.is_error:
+            if contract_code := computation.output:
                 contract_code_gas_fee = len(contract_code) * GAS_CODEDEPOSIT
                 try:
                     computation.consume_gas(
@@ -128,4 +124,4 @@ class FrontierComputation(BaseComputation):
                         encode_hex(keccak(contract_code)),
                     )
                     state.set_code(message.storage_address, contract_code)
-            return computation
+        return computation

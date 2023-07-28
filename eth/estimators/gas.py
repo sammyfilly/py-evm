@@ -26,11 +26,7 @@ def _get_computation_error(
 
     try:
         computation = state.apply_transaction(transaction)
-        if computation.is_error:
-            return computation.error
-        else:
-            return None
-
+        return computation.error if computation.is_error else None
     finally:
         state.revert(snapshot)
 

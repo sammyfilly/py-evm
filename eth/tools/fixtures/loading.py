@@ -27,8 +27,7 @@ from ._utils import (
 # Filesystem fixture loading.
 #
 def find_fixture_files(fixtures_base_dir: str) -> Iterable[str]:
-    all_fixture_paths = recursive_find_files(fixtures_base_dir, "*.json")
-    return all_fixture_paths
+    return recursive_find_files(fixtures_base_dir, "*.json")
 
 
 @to_tuple
@@ -68,8 +67,7 @@ def load_fixture(
     a normalization function.
     """
     file_fixtures = load_json_fixture(fixture_path)
-    fixture = normalize_fn(file_fixtures[fixture_key])
-    return fixture
+    return normalize_fn(file_fixtures[fixture_key])
 
 
 @require_pytest
@@ -99,8 +97,7 @@ def filter_fixtures(
                 continue
 
         if mark_fn is not None:
-            mark = mark_fn(fixture_relpath, *fixture_data[1:])
-            if mark:
+            if mark := mark_fn(fixture_relpath, *fixture_data[1:]):
                 yield pytest.param(
                     (fixture_path, *fixture_data[1:]),
                     marks=mark,

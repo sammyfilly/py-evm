@@ -32,10 +32,7 @@ def int_to_bytes32(value: Union[int, bool]) -> Hash32:
 
 def ceilXX(value: int, ceiling: int) -> int:
     remainder = value % ceiling
-    if remainder == 0:
-        return value
-    else:
-        return value + ceiling - remainder
+    return value if remainder == 0 else value + ceiling - remainder
 
 
 ceil32 = functools.partial(ceilXX, ceiling=32)
@@ -43,17 +40,11 @@ ceil8 = functools.partial(ceilXX, ceiling=8)
 
 
 def unsigned_to_signed(value: int) -> int:
-    if value <= UINT_255_MAX:
-        return value
-    else:
-        return value - UINT_256_CEILING
+    return value if value <= UINT_255_MAX else value - UINT_256_CEILING
 
 
 def signed_to_unsigned(value: int) -> int:
-    if value < 0:
-        return value + UINT_256_CEILING
-    else:
-        return value
+    return value + UINT_256_CEILING if value < 0 else value
 
 
 def is_even(value: int) -> bool:

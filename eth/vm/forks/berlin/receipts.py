@@ -139,7 +139,7 @@ class BerlinReceiptBuilder(ReceiptBuilderAPI):
 
     @classmethod
     def decode(cls, encoded: bytes) -> ReceiptAPI:
-        if len(encoded) == 0:
+        if not encoded:
             raise ValidationError("Encoded receipt was empty, which makes it invalid")
 
         type_id = to_int(encoded[0])

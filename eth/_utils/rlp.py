@@ -22,37 +22,38 @@ from eth.rlp.blocks import (
 def diff_rlp_object(
     left: BaseBlock, right: BaseBlock
 ) -> Optional[Iterable[Tuple[str, str, str]]]:
-    if left != right:
-        rlp_type = type(left)
+    if left == right:
+        return
+    rlp_type = type(left)
 
-        for field_name, field_type in rlp_type._meta.fields:
-            left_value = getattr(left, field_name)
-            right_value = getattr(right, field_name)
-            if isinstance(field_type, type) and issubclass(
-                field_type, rlp.Serializable
-            ):
-                sub_diff = diff_rlp_object(left_value, right_value)
-                for sub_field_name, sub_left_value, sub_right_value in sub_diff:
-                    yield (
-                        f"{field_name}.{sub_field_name}",
-                        sub_left_value,
-                        sub_right_value,
-                    )
-            elif isinstance(field_type, (rlp.sedes.List, rlp.sedes.CountableList)):
-                if tuple(left_value) != tuple(right_value):
-                    yield (
-                        field_name,
-                        left_value,
-                        right_value,
-                    )
-            elif left_value != right_value:
+    for field_name, field_type in rlp_type._meta.fields:
+        left_value = getattr(left, field_name)
+        right_value = getattr(right, field_name)
+        if isinstance(field_type, type) and issubclass(
+            field_type, rlp.Serializable
+        ):
+            sub_diff = diff_rlp_object(left_value, right_value)
+            for sub_field_name, sub_left_value, sub_right_value in sub_diff:
+                yield (
+                    f"{field_name}.{sub_field_name}",
+                    sub_left_value,
+                    sub_right_value,
+                )
+        elif isinstance(field_type, (rlp.sedes.List, rlp.sedes.CountableList)):
+            if tuple(left_value) != tuple(right_value):
                 yield (
                     field_name,
                     left_value,
                     right_value,
                 )
-            else:
-                continue
+        elif left_value != right_value:
+            yield (
+                field_name,
+                left_value,
+                right_value,
+            )
+        else:
+            continue
 
 
 def _humanized_diff_elements(
@@ -85,9 +86,9 @@ def validate_rlp_equal(
         return
 
     if obj_a_name is None:
-        obj_a_name = obj_a.__class__.__name__ + "_a"
+        obj_a_name = f"{obj_a.__class__.__name__}_a"
     if obj_b_name is None:
-        obj_b_name = obj_b.__class__.__name__ + "_b"
+        obj_b_name = f"{obj_b.__class__.__name__}_b"
 
     diff = diff_rlp_object(obj_a, obj_b)
     if len(diff) == 0:

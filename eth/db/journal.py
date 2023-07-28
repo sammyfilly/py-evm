@@ -147,17 +147,16 @@ class Journal(BaseDB):
         Creates a new checkpoint. Checkpoints are a sequential int chosen by Journal
         to prevent collisions.
         """
-        if custom_checkpoint is not None:
-            if custom_checkpoint in self._journal_data:
-                raise ValidationError(
-                    "Tried to record with an existing checkpoint: "
-                    f"{custom_checkpoint!r}"
-                )
-            else:
-                checkpoint = custom_checkpoint
-        else:
+        if custom_checkpoint is None:
             checkpoint = get_next_checkpoint()
 
+        elif custom_checkpoint in self._journal_data:
+            raise ValidationError(
+                "Tried to record with an existing checkpoint: "
+                f"{custom_checkpoint!r}"
+            )
+        else:
+            checkpoint = custom_checkpoint
         self._journal_data[checkpoint] = {}
         self._checkpoint_stack.append(checkpoint)
         return checkpoint
@@ -181,9 +180,7 @@ class Journal(BaseDB):
                     # The current value may not exist, if it was a delete followed by a
                     # clear, so pop it off, or ignore if it is already missing
                     self._current_values.pop(old_key, None)
-                elif old_value is DELETE_WRAPPED:
-                    self._current_values[old_key] = old_value
-                elif type(old_value) is bytes:
+                elif old_value is DELETE_WRAPPED or type(old_value) is bytes:
                     self._current_values[old_key] = old_value
                 else:
                     raise ValidationError(
@@ -272,17 +269,14 @@ class Journal(BaseDB):
     #
     # Database API
     #
-    def __getitem__(self, key: bytes) -> ChangesetValue:  # type: ignore # Breaks LSP
+    def __getitem__(self, key: bytes) -> ChangesetValue:    # type: ignore # Breaks LSP
         """
         For key lookups we need to iterate through the changesets in reverse
         order, returning from the first one in which the key is present.
         """
         # the default result (the value if not in the local values) depends on whether
         # there was a clear
-        if self._ignore_wrapped_db:
-            default_result = REVERT_TO_WRAPPED
-        else:
-            default_result = None  # indicate that caller should check wrapped database
+        default_result = REVERT_TO_WRAPPED if self._ignore_wrapped_db else None
         return self._current_values.get(key, default_result)
 
     def __setitem__(self, key: bytes, value: bytes) -> None:
@@ -320,9 +314,7 @@ class Journal(BaseDB):
         for key, value in self._current_values.items():
             if value is DELETE_WRAPPED:
                 del tracker[key]
-            elif value is REVERT_TO_WRAPPED:
-                pass
-            else:
+            elif value is not REVERT_TO_WRAPPED:
                 tracker[key] = value  # type: ignore  # cast(bytes, value)
 
         return tracker.diff()
@@ -414,13 +406,12 @@ class JournalDB(BaseDB):
     def __delitem__(self, key: bytes) -> None:
         if key in self._wrapped_db:
             self._journal.delete_wrapped(key)
+        elif key in self._journal:
+            self._journal.delete_local(key)
         else:
-            if key in self._journal:
-                self._journal.delete_local(key)
-            else:
-                raise KeyError(
-                    key, "key could not be deleted in JournalDB, because it was missing"
-                )
+            raise KeyError(
+                key, "key could not be deleted in JournalDB, because it was missing"
+            )
 
     #
     # Snapshot API
@@ -454,9 +445,7 @@ class JournalDB(BaseDB):
             try:
                 if value is DELETE_WRAPPED:
                     del self._wrapped_db[key]
-                elif value is REVERT_TO_WRAPPED:
-                    pass
-                else:
+                elif value is not REVERT_TO_WRAPPED:
                     self._wrapped_db[key] = cast(bytes, value)
             except Exception:
                 self._reapply_checkpoint_to_journal(journal_data)

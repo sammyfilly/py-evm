@@ -102,19 +102,15 @@ def blake2b_compress(
     sigma_schedule_len = len(sigma_schedule)
 
     # convert block (bytes) into 16 LE words
-    m = struct.unpack_from("<16%s" % Blake2b.WORDFMT, bytes(block))
+    m = struct.unpack_from(f"<16{Blake2b.WORDFMT}", bytes(block))
 
     v = [0] * 16
-    v[0:8] = h_starting_state
+    v[:8] = h_starting_state
     v[8:12] = IV[:4]
     v[12] = t_offset_counters[0] ^ IV[4]
     v[13] = t_offset_counters[1] ^ IV[5]
 
-    if final_block_flag:
-        v[14] = Blake2b.MASKBITS ^ IV[6]
-    else:
-        v[14] = IV[6]
-
+    v[14] = Blake2b.MASKBITS ^ IV[6] if final_block_flag else IV[6]
     # The original code had a mechanism to turn on a "tree mode",
     # setting f[1] to MASKBITS here.
     # There seems to be no reference to that bit flip in the 3.2 section of RFC 7693,

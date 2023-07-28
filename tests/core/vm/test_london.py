@@ -104,7 +104,7 @@ def london_plus_miner(request, base_db, genesis_state):
 
 
 # Mining VMs up to, but not including, London
-@pytest.fixture(params=MINING_MAINNET_VMS[0:9])
+@pytest.fixture(params=MINING_MAINNET_VMS[:9])
 def pre_london_miner(request, base_db, genesis_state):
     vm_under_test = request.param
 

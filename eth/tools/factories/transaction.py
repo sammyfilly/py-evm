@@ -36,13 +36,12 @@ def new_transaction(
         value=amount,
         data=data,
     )
-    if private_key:
-        if chain_id is None:
-            return tx.as_signed_transaction(private_key)
-        else:
-            return tx.as_signed_transaction(private_key, chain_id=chain_id)
-    else:
+    if not private_key:
         return SpoofTransaction(tx, from_=from_)
+    if chain_id is None:
+        return tx.as_signed_transaction(private_key)
+    else:
+        return tx.as_signed_transaction(private_key, chain_id=chain_id)
 
 
 @curry

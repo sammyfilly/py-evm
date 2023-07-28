@@ -91,8 +91,7 @@ def memory_gas_cost(size_in_bytes: int) -> int:
     linear_cost = size_in_words * GAS_MEMORY
     quadratic_cost = size_in_words**2 // GAS_MEMORY_QUADRATIC_DENOMINATOR
 
-    total_cost = linear_cost + quadratic_cost
-    return total_cost
+    return linear_cost + quadratic_cost
 
 
 class BaseComputation(ComputationAPI, Configurable):
@@ -189,7 +188,7 @@ class BaseComputation(ComputationAPI, Configurable):
     ) -> MessageAPI:
         kwargs.setdefault("sender", self.msg.storage_address)
 
-        child_message = Message(
+        return Message(
             gas=gas,
             to=to,
             value=value,
@@ -198,7 +197,6 @@ class BaseComputation(ComputationAPI, Configurable):
             depth=self.msg.depth + 1,
             **kwargs,
         )
-        return child_message
 
     def apply_child_computation(
         self,
@@ -212,36 +210,35 @@ class BaseComputation(ComputationAPI, Configurable):
         self,
         child_msg: MessageAPI,
     ) -> ComputationAPI:
-        if child_msg.is_create:
-            child_computation = self.apply_create_message(
+        return (
+            self.apply_create_message(
                 self.state,
                 child_msg,
                 self.transaction_context,
             )
-        else:
-            child_computation = self.apply_message(
+            if child_msg.is_create
+            else self.apply_message(
                 self.state,
                 child_msg,
                 self.transaction_context,
             )
-        return child_computation
+        )
 
     def add_child_computation(
         self,
         child_computation: ComputationAPI,
     ) -> None:
         if child_computation.is_error:
-            if child_computation.msg.is_create:
-                self.return_data = child_computation.output
-            elif child_computation.should_burn_gas:
-                self.return_data = b""
-            else:
-                self.return_data = child_computation.output
+            self.return_data = (
+                child_computation.output
+                if child_computation.msg.is_create
+                or not child_computation.should_burn_gas
+                else b""
+            )
+        elif child_computation.msg.is_create:
+            self.return_data = b""
         else:
-            if child_computation.msg.is_create:
-                self.return_data = b""
-            else:
-                self.return_data = child_computation.output
+            self.return_data = child_computation.output
         self.children.append(child_computation)
 
     # -- gas consumption -- #
@@ -471,10 +468,7 @@ class BaseComputation(ComputationAPI, Configurable):
             )
 
     def get_gas_remaining(self) -> int:
-        if self.should_burn_gas:
-            return 0
-        else:
-            return self._gas_meter.gas_remaining
+        return 0 if self.should_burn_gas else self._gas_meter.gas_remaining
 
     @classmethod
     def consume_initcode_gas_cost(cls, computation: ComputationAPI) -> None:
@@ -529,10 +523,7 @@ class BaseComputation(ComputationAPI, Configurable):
     # -- computation result -- #
     @property
     def output(self) -> bytes:
-        if self.should_erase_return_data:
-            return b""
-        else:
-            return self._output
+        return b"" if self.should_erase_return_data else self._output
 
     @output.setter
     def output(self, value: bytes) -> None:
@@ -542,17 +533,11 @@ class BaseComputation(ComputationAPI, Configurable):
     # -- opcode API -- #
     @property
     def precompiles(self) -> Dict[Address, Callable[[ComputationAPI], Any]]:
-        if self._precompiles is None:
-            return {}
-        else:
-            return self._precompiles
+        return {} if self._precompiles is None else self._precompiles
 
     @classmethod
     def get_precompiles(cls) -> Dict[Address, Callable[[ComputationAPI], Any]]:
-        if cls._precompiles is None:
-            return {}
-        else:
-            return cls._precompiles
+        return {} if cls._precompiles is None else cls._precompiles
 
     def get_opcode_fn(self, opcode: int) -> OpcodeAPI:
         try:

@@ -32,7 +32,7 @@ if __name__ == "__main__":
         for test_group, tests in test_groups.items():
             for filler, filler_kwargs in tests:
                 test_name = get_test_name(filler)
-                filename = test_name + ".json"
+                filename = f"{test_name}.json"
 
                 filler_src_path = os.path.join(filler_dir, test_group, filename)
                 filler_path = os.path.join(FILLER_PARENT_DIR, filler_src_path)

@@ -67,10 +67,7 @@ class CodeStream(CodeStreamAPI):
 
     def peek(self) -> int:
         pc = self.program_counter
-        if pc < self._length_cache:
-            return self._raw_code_bytes[pc]
-        else:
-            return STOP
+        return self._raw_code_bytes[pc] if pc < self._length_cache else STOP
 
     @contextlib.contextmanager
     def seek(self, program_counter: int) -> Iterator["CodeStream"]:
@@ -97,9 +94,7 @@ class CodeStream(CodeStreamAPI):
                 yield earlier_position
 
     def is_valid_opcode(self, position: int) -> bool:
-        if position >= self._length_cache:
-            return False
-        elif position in self.invalid_positions:
+        if position >= self._length_cache or position in self.invalid_positions:
             return False
         elif position in self.valid_positions:
             return True

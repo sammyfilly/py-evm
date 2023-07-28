@@ -141,9 +141,7 @@ def env_bool(
     :type default: bool
     """
     value = get_env_value(name, required=required, default=default)
-    if value is empty:
-        return None
-    return value in TRUE_VALUES
+    return None if value is empty else value in TRUE_VALUES
 
 
 def env_string(

@@ -17,7 +17,7 @@ def state(chain_without_block_validation, canonical_address_a):
 
 @pytest.fixture
 def message(canonical_address_a, canonical_address_b):
-    message = Message(
+    return Message(
         to=canonical_address_a,
         sender=canonical_address_b,
         value=100,
@@ -25,31 +25,27 @@ def message(canonical_address_a, canonical_address_b):
         code=b"",
         gas=100,
     )
-    return message
 
 
 @pytest.fixture
 def computation(message, transaction_context, state):
-    computation = FrontierComputation(
+    return FrontierComputation(
         state=state,
         message=message,
         transaction_context=transaction_context,
     )
-    return computation
 
 
 @pytest.fixture
 def child_message(computation, canonical_address_b):
-    child_message = computation.prepare_child_message(
+    return computation.prepare_child_message(
         gas=100, to=canonical_address_b, value=200, data=b"", code=b""
     )
-    return child_message
 
 
 @pytest.fixture
 def child_computation(computation, child_message):
-    child_computation = computation.generate_child_computation(child_message)
-    return child_computation
+    return computation.generate_child_computation(child_message)
 
 
 def test_generate_child_computation(computation, child_computation):

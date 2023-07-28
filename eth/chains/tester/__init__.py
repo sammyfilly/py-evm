@@ -82,8 +82,7 @@ def _generate_vm_configuration(
     fork_names = {
         fork_name for _, fork_name in fork_start_blocks if isinstance(fork_name, str)
     }
-    unknown_forks = sorted(fork_names.difference(MAINNET_VMS.keys()))
-    if unknown_forks:
+    if unknown_forks := sorted(fork_names.difference(MAINNET_VMS.keys())):
         raise ValidationError(f"Configuration contains unknown forks: {unknown_forks}")
 
     # Validate that *if* an explicit value was passed in for dao_start_block

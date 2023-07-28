@@ -51,11 +51,10 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture
 def fixture(fixture_data):
     fixture_path, fixture_key = fixture_data
-    fixture = load_fixture(
+    return load_fixture(
         fixture_path,
         fixture_key,
     )
-    return fixture
 
 
 VM_FORK_MAP = {

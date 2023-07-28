@@ -97,10 +97,7 @@ class Message(MessageAPI):
 
     @property
     def code_address(self) -> Address:
-        if self._code_address is not None:
-            return self._code_address
-        else:
-            return self.to
+        return self._code_address if self._code_address is not None else self.to
 
     @code_address.setter
     def code_address(self, value: Address) -> None:
@@ -108,10 +105,7 @@ class Message(MessageAPI):
 
     @property
     def storage_address(self) -> Address:
-        if self._storage_address is not None:
-            return self._storage_address
-        else:
-            return self.to
+        return self._storage_address if self._storage_address is not None else self.to
 
     @storage_address.setter
     def storage_address(self, value: Address) -> None:

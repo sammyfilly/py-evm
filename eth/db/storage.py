@@ -394,10 +394,7 @@ class AccountStorageDB(AccountStorageDatabaseAPI):
             #   that point. We use the clear count as an index to get back to the
             #   old base trie.
             self._storage_lookup.rollback_trie(reverted_clear_count)
-        elif reverted_clear_count == latest_clear_count:
-            # No change in the base trie, take no action
-            pass
-        else:
+        elif reverted_clear_count != latest_clear_count:
             # Although CREATE2 permits multiple creates and deletes in a single block,
             #   you can still only revert across a single delete. That's because delete
             #   is only triggered at the end of the transaction.

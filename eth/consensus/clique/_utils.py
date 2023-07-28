@@ -150,7 +150,7 @@ def validate_header_integrity(header: BlockHeaderAPI, epoch_length: int) -> None
             f"but is {encode_hex(header.coinbase)}"
         )
 
-    if header.nonce != NONCE_AUTH and header.nonce != NONCE_DROP:
+    if header.nonce not in [NONCE_AUTH, NONCE_DROP]:
         raise ValidationError(f"Invalid nonce: {header.nonce!r}")
 
     if at_checkpoint and header.nonce != NONCE_DROP:

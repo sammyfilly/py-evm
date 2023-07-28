@@ -3758,7 +3758,7 @@ class VirtualMachineAPI(ConfigurableAPI):
     #
     @classmethod
     @abstractmethod
-    def validate_receipt(self, receipt: ReceiptAPI) -> None:
+    def validate_receipt(cls, receipt: ReceiptAPI) -> None:
         """
         Validate the given ``receipt``.
         """
@@ -3773,9 +3773,7 @@ class VirtualMachineAPI(ConfigurableAPI):
 
     @classmethod
     @abstractmethod
-    def validate_header(
-        self, header: BlockHeaderAPI, parent_header: BlockHeaderAPI
-    ) -> None:
+    def validate_header(cls, header: BlockHeaderAPI, parent_header: BlockHeaderAPI) -> None:
         """
         :raise eth.exceptions.ValidationError: if the header is not valid
         """

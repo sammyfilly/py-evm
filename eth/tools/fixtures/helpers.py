@@ -78,9 +78,7 @@ def setup_state(desired_state: AccountState, state: StateAPI) -> None:
 
 
 def verify_state(expected_state: AccountState, state: StateAPI) -> None:
-    diff = diff_state(expected_state, state)
-    new_line = "\n"
-    if diff:
+    if diff := diff_state(expected_state, state):
         error_messages = []
         for account, field, actual_value, expected_value in diff:
             if field == "balance":
@@ -94,6 +92,7 @@ def verify_state(expected_state: AccountState, state: StateAPI) -> None:
                     f"{to_normalized_address(account)}({field}) | "
                     f"Actual: {actual_value!r} | Expected: {expected_value!r}"
                 )
+        new_line = "\n"
         raise AssertionError(
             f"State DB did not match expected state on {len(error_messages)} "
             f"values:{new_line} {f'{new_line} - '.join(error_messages)}"
@@ -292,9 +291,7 @@ def apply_fixture_block_to_chain(
 
 
 def should_run_slow_tests() -> bool:
-    if os.environ.get("TRAVIS_EVENT_TYPE") == "cron":
-        return True
-    return False
+    return os.environ.get("TRAVIS_EVENT_TYPE") == "cron"
 
 
 def get_test_name(filler: Dict[str, Any]) -> str:

@@ -434,7 +434,7 @@ class BerlinTransactionBuilder(TransactionBuilderAPI):
 
     @classmethod
     def decode(cls, encoded: bytes) -> SignedTransactionAPI:
-        if len(encoded) == 0:
+        if not encoded:
             raise ValidationError(
                 "Encoded transaction was empty, which makes it invalid"
             )
@@ -499,7 +499,7 @@ class BerlinTransactionBuilder(TransactionBuilderAPI):
         data: bytes,
         access_list: Sequence[Tuple[Address, Sequence[int]]],
     ) -> TypedTransaction:
-        transaction = UnsignedAccessListTransaction(
+        return UnsignedAccessListTransaction(
             chain_id,
             nonce,
             gas_price,
@@ -509,7 +509,6 @@ class BerlinTransactionBuilder(TransactionBuilderAPI):
             data,
             access_list,
         )
-        return transaction
 
     @classmethod
     def new_access_list_transaction(

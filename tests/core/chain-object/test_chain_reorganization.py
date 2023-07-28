@@ -15,14 +15,12 @@ def mining_base_chain(request):
     else:
         fork_fns = (request.param(0),)
 
-    chain = api.build(
+    return api.build(
         MiningChain,
         *fork_fns,
         api.disable_pow_check(),
         api.genesis(),
     )
-
-    return chain
 
 
 @pytest.fixture

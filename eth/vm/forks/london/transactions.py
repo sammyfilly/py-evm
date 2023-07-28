@@ -279,7 +279,7 @@ class LondonTransactionBuilder(BerlinTransactionBuilder):
         data: bytes,
         access_list: Sequence[Tuple[Address, Sequence[int]]],
     ) -> LondonTypedTransaction:
-        transaction = UnsignedDynamicFeeTransaction(
+        return UnsignedDynamicFeeTransaction(
             chain_id,
             nonce,
             max_priority_fee_per_gas,
@@ -290,7 +290,6 @@ class LondonTransactionBuilder(BerlinTransactionBuilder):
             data,
             access_list,
         )
-        return transaction
 
     @classmethod
     def new_dynamic_fee_transaction(

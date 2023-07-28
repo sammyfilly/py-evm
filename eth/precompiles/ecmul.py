@@ -65,5 +65,4 @@ def _ecmull(data: bytes) -> Tuple[bn128.FQ, bn128.FQ]:
 
     p = validate_point(x, y)
 
-    result = bn128.normalize(bn128.multiply(p, m))
-    return result
+    return bn128.normalize(bn128.multiply(p, m))

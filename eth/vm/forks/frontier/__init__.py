@@ -48,13 +48,11 @@ def make_frontier_receipt(
         for address, topics, data in computation.get_log_entries()
     ]
 
-    receipt = Receipt(
+    return Receipt(
         state_root=ZERO_HASH32,
         gas_used=new_cumulative_gas_used,
         logs=logs,
     )
-
-    return receipt
 
 
 class FrontierVM(VM):

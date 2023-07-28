@@ -25,22 +25,20 @@ def sstore(computation: ComputationAPI) -> None:
     is_currently_empty = not bool(current_value)
     is_going_to_be_empty = not bool(value)
 
-    if is_currently_empty:
+    if is_currently_empty or not is_going_to_be_empty:
         gas_refund = 0
-    elif is_going_to_be_empty:
+    else:
         gas_refund = constants.REFUND_SCLEAR
-    else:
-        gas_refund = 0
-
-    if is_currently_empty and is_going_to_be_empty:
+    if (
+        is_currently_empty
+        and is_going_to_be_empty
+        or not is_currently_empty
+        and is_going_to_be_empty
+        or not is_currently_empty
+    ):
         gas_cost = constants.GAS_SRESET
-    elif is_currently_empty:
+    else:
         gas_cost = constants.GAS_SSET
-    elif is_going_to_be_empty:
-        gas_cost = constants.GAS_SRESET
-    else:
-        gas_cost = constants.GAS_SRESET
-
     computation.consume_gas(
         gas_cost,
         reason=(
@@ -102,30 +100,29 @@ def net_sstore(gas_schedule: NetSStoreGasSchedule, computation: ComputationAPI) 
 
     if current_value == value:
         gas_cost = gas_schedule.sload_gas
-    else:
-        if original_value == current_value:
-            if original_value == 0:
-                gas_cost = gas_schedule.sstore_set_gas
-            else:
-                gas_cost = gas_schedule.sstore_reset_gas
-
-                if value == 0:
-                    gas_refund += gas_schedule.sstore_clears_schedule
+    elif original_value == current_value:
+        if original_value == 0:
+            gas_cost = gas_schedule.sstore_set_gas
         else:
-            gas_cost = gas_schedule.sload_gas
+            gas_cost = gas_schedule.sstore_reset_gas
 
-            if original_value != 0:
-                if current_value == 0:
-                    gas_refund -= gas_schedule.sstore_clears_schedule
-                if value == 0:
-                    gas_refund += gas_schedule.sstore_clears_schedule
+            if value == 0:
+                gas_refund += gas_schedule.sstore_clears_schedule
+    else:
+        gas_cost = gas_schedule.sload_gas
 
-            if original_value == value:
-                if original_value == 0:
-                    gas_refund += gas_schedule.sstore_set_gas - gas_schedule.sload_gas
-                else:
-                    gas_refund += gas_schedule.sstore_reset_gas - gas_schedule.sload_gas
+        if original_value != 0:
+            if current_value == 0:
+                gas_refund -= gas_schedule.sstore_clears_schedule
+            if value == 0:
+                gas_refund += gas_schedule.sstore_clears_schedule
 
+        if original_value == value:
+            gas_refund += (
+                gas_schedule.sstore_set_gas - gas_schedule.sload_gas
+                if original_value == 0
+                else gas_schedule.sstore_reset_gas - gas_schedule.sload_gas
+            )
     computation.consume_gas(
         gas_cost,
         reason=(

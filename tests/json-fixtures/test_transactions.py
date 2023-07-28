@@ -93,13 +93,11 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture
 def fixture(fixture_data):
     fixture_path, fixture_key, fixture_fork = fixture_data
-    fixture = load_fixture(
+    return load_fixture(
         fixture_path,
         fixture_key,
         normalize_transactiontest_fixture(fork=fixture_fork),
     )
-
-    return fixture
 
 
 @pytest.fixture

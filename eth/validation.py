@@ -57,7 +57,7 @@ def validate_is_integer(value: Union[int, bool], title: str = "Value") -> None:
 
 
 def validate_length(value: Sequence[Any], length: int, title: str = "Value") -> None:
-    if not len(value) == length:
+    if len(value) != length:
         raise ValidationError(
             f"{title} must be of length {length}.  Got {value} of length {len(value)}"
         )
@@ -100,12 +100,12 @@ def validate_lt(value: int, maximum: int, title: str = "Value") -> None:
 
 
 def validate_canonical_address(value: Address, title: str = "Value") -> None:
-    if not isinstance(value, bytes) or not len(value) == 20:
+    if not isinstance(value, bytes) or len(value) != 20:
         raise ValidationError(f"{title} {value!r} is not a valid canonical address")
 
 
 def validate_multiple_of(value: int, multiple_of: int, title: str = "Value") -> None:
-    if not value % multiple_of == 0:
+    if value % multiple_of != 0:
         raise ValidationError(f"{title} {value} is not a multiple of {multiple_of}")
 
 
@@ -119,7 +119,7 @@ def validate_word(value: Hash32, title: str = "Value") -> None:
         raise ValidationError(
             f"{title} is not a valid word. Must be of bytes type: Got: {type(value)}"
         )
-    elif not len(value) == 32:
+    elif len(value) != 32:
         raise ValidationError(
             f"{title} is not a valid word. Must be 32 bytes in length: "
             f"Got: {len(value)}"
@@ -255,8 +255,9 @@ ALLOWED_HEADER_FIELDS = {
 
 
 def validate_header_params_for_configuration(header_params: Dict[str, Any]) -> None:
-    extra_fields = set(header_params.keys()).difference(ALLOWED_HEADER_FIELDS)
-    if extra_fields:
+    if extra_fields := set(header_params.keys()).difference(
+        ALLOWED_HEADER_FIELDS
+    ):
         raise ValidationError(
             "The `configure_header` method may only be used with the fields "
             f"({', '.join(tuple(sorted(ALLOWED_HEADER_FIELDS)))}). "

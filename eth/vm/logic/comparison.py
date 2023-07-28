@@ -16,11 +16,7 @@ def lt(computation: ComputationAPI) -> None:
     """
     left, right = computation.stack_pop_ints(2)
 
-    if left < right:
-        result = 1
-    else:
-        result = 0
-
+    result = 1 if left < right else 0
     computation.stack_push_int(result)
 
 
@@ -30,11 +26,7 @@ def gt(computation: ComputationAPI) -> None:
     """
     left, right = computation.stack_pop_ints(2)
 
-    if left > right:
-        result = 1
-    else:
-        result = 0
-
+    result = 1 if left > right else 0
     computation.stack_push_int(result)
 
 
@@ -47,11 +39,7 @@ def slt(computation: ComputationAPI) -> None:
         computation.stack_pop_ints(2),
     )
 
-    if left < right:
-        result = 1
-    else:
-        result = 0
-
+    result = 1 if left < right else 0
     computation.stack_push_int(signed_to_unsigned(result))
 
 
@@ -64,11 +52,7 @@ def sgt(computation: ComputationAPI) -> None:
         computation.stack_pop_ints(2),
     )
 
-    if left > right:
-        result = 1
-    else:
-        result = 0
-
+    result = 1 if left > right else 0
     computation.stack_push_int(signed_to_unsigned(result))
 
 
@@ -78,11 +62,7 @@ def eq(computation: ComputationAPI) -> None:
     """
     left, right = computation.stack_pop_ints(2)
 
-    if left == right:
-        result = 1
-    else:
-        result = 0
-
+    result = 1 if left == right else 0
     computation.stack_push_int(result)
 
 
@@ -92,11 +72,7 @@ def iszero(computation: ComputationAPI) -> None:
     """
     value = computation.stack_pop1_int()
 
-    if value == 0:
-        result = 1
-    else:
-        result = 0
-
+    result = 1 if value == 0 else 0
     computation.stack_push_int(result)
 
 
@@ -150,9 +126,5 @@ def byte_op(computation: ComputationAPI) -> None:
     """
     position, value = computation.stack_pop_ints(2)
 
-    if position >= 32:
-        result = 0
-    else:
-        result = (value // pow(256, 31 - position)) % 256
-
+    result = 0 if position >= 32 else (value // pow(256, 31 - position)) % 256
     computation.stack_push_int(result)

@@ -28,8 +28,8 @@ DIR = os.path.dirname("__file__")
 with open(os.path.join(DIR, "../setup.py"), "r") as f:
     for line in f:
         for field in about_fields:
-            if " " + field + "=" in line:
-                about["__%s__" % field] = line.split('"')[1]
+            if f" {field}=" in line:
+                about[f"__{field}__"] = line.split('"')[1]
 
 
 # -- General configuration ------------------------------------------------

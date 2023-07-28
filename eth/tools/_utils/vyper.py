@@ -36,5 +36,4 @@ def require_vyper(fn: Callable[..., Any]) -> Callable[..., Any]:
 def compile_vyper_lll(vyper_code: List[Any]) -> Tuple[bytes, Dict[str, Any]]:
     lll_node = LLLnode.from_list(vyper_code)
     assembly = compile_to_assembly(lll_node)
-    code = assembly_to_evm(assembly)
-    return code
+    return assembly_to_evm(assembly)

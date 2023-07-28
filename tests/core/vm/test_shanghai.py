@@ -45,7 +45,7 @@ def test_withdrawals_are_stored_in_chain_db(shanghai_at_genesis):
 
     # assert coinbase balance is equal to sum of withdrawals in wei (gwei == 10**9 wei)
     assert chain.get_vm().state.get_balance(vm.state.coinbase) == sum(
-        [w.amount * 10**9 for w in withdrawals]
+        w.amount * 10**9 for w in withdrawals
     )
 
     chain.mine_block()  # block 3

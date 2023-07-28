@@ -97,12 +97,11 @@ def goerli_chain(base_db):
     )
     clique_vms = CliqueApplier().amend_vm_configuration(vms)
 
-    chain = MiningChain.configure(
+    return MiningChain.configure(
         vm_configuration=clique_vms,
         consensus_context_class=CliqueConsensusContext,
         chain_id=5,
     ).from_genesis_header(base_db, GOERLI_GENESIS_HEADER)
-    return chain
 
 
 @pytest.mark.parametrize(

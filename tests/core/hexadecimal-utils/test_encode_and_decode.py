@@ -47,7 +47,7 @@ HEX_ALPHABET = "1234567890abcdef"
 
 
 def _coerce_to_even_hex(raw_hex):
-    return "0x" + raw_hex[: 2 * (len(raw_hex) // 2)]
+    return f"0x{raw_hex[:2 * (len(raw_hex) // 2)]}"
 
 
 @given(

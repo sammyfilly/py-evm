@@ -22,9 +22,7 @@ def chain(chain_without_block_validation):
 def fork_chain(chain):
     # make a duplicate chain with no shared state
     fork_db = AtomicDB(MemoryDB(chain.chaindb.db.wrapped_db.kv_store.copy()))
-    fork_chain = type(chain)(fork_db, chain.header)
-
-    return fork_chain
+    return type(chain)(fork_db, chain.header)
 
 
 @pytest.mark.parametrize(

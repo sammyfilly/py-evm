@@ -299,17 +299,16 @@ class HeaderDB(HeaderDatabaseAPI):
             # There is no canonical block here
             next_invalid_child = None
         else:
-            if child.parent_hash != header.hash:
-                if child.hash in checkpoints:
-                    raise CheckpointsMustBeCanonical(
-                        f"Trying to decanonicalize {child} while making "
-                        f"{header} the chain tip"
-                    )
-                else:
-                    next_invalid_child = child
-            else:
+            if child.parent_hash == header.hash:
                 next_invalid_child = None
 
+            elif child.hash in checkpoints:
+                raise CheckpointsMustBeCanonical(
+                    f"Trying to decanonicalize {child} while making "
+                    f"{header} the chain tip"
+                )
+            else:
+                next_invalid_child = child
         while next_invalid_child:
             # decanonicalize, and add gap for tracking
             db.delete(SchemaV1.make_block_number_to_hash_lookup_key(child_number))
@@ -380,11 +379,7 @@ class HeaderDB(HeaderDatabaseAPI):
                 f"with unknown parent ({encode_hex(first_header.parent_hash)})"
             )
 
-        if is_genesis:
-            score = 0
-        else:
-            score = cls._get_score(db, first_header.parent_hash)
-
+        score = 0 if is_genesis else cls._get_score(db, first_header.parent_hash)
         curr_chain_head = first_header
         db.set(
             curr_chain_head.hash,
@@ -621,12 +616,11 @@ class HeaderDB(HeaderDatabaseAPI):
 
             if h.parent_hash == genesis_parent_hash:
                 break
-            else:
-                try:
-                    h = cls._get_block_header_by_hash(db, h.parent_hash)
-                except HeaderNotFound:
-                    # We must have hit a checkpoint parent, return early
-                    break
+            try:
+                h = cls._get_block_header_by_hash(db, h.parent_hash)
+            except HeaderNotFound:
+                # We must have hit a checkpoint parent, return early
+                break
 
     @staticmethod
     def _add_block_number_to_hash_lookup(

@@ -57,9 +57,8 @@ def _mark_address_warm(computation: ComputationAPI, address: Address) -> bool:
 
     if computation.state.is_address_warm(address):
         return False
-    else:
-        computation.state.mark_address_warm(address)
-        return True
+    computation.state.mark_address_warm(address)
+    return True
 
 
 def _account_load_cost(was_cold: bool) -> int:
@@ -85,9 +84,8 @@ def _mark_storage_warm(computation: ComputationAPI, slot: int) -> bool:
     storage_address = computation.msg.storage_address
     if computation.state.is_storage_warm(storage_address, slot):
         return False
-    else:
-        computation.state.mark_storage_warm(storage_address, slot)
-        return True
+    computation.state.mark_storage_warm(storage_address, slot)
+    return True
 
 
 def balance_eip2929(computation: ComputationAPI) -> None:

@@ -56,7 +56,4 @@ def fill_test(
     )
     filled = assoc_in(filled, [test_name, "_info"], info)
 
-    if apply_formatter:
-        return formatter(filled)
-    else:
-        return filled
+    return formatter(filled) if apply_formatter else filled

@@ -76,8 +76,7 @@ def _ecpairing(data: BytesOrView) -> bool:
     )
     exponent = pipe(bn128.FQ12.one(), *processing_pipeline)
 
-    result = bn128.final_exponentiate(exponent) == bn128.FQ12.one()
-    return result
+    return bn128.final_exponentiate(exponent) == bn128.FQ12.one()
 
 
 @curry

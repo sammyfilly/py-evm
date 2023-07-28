@@ -50,10 +50,7 @@ def extract_chain_id(v: int) -> int:
 
 
 def extract_signature_v(v: int) -> int:
-    if is_even(v):
-        return V_OFFSET + 1
-    else:
-        return V_OFFSET
+    return V_OFFSET + 1 if is_even(v) else V_OFFSET
 
 
 def create_transaction_signature(

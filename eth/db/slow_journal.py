@@ -111,17 +111,16 @@ class Journal(BaseDB):
         Creates a new changeset. Changesets are referenced by a random uuid4
         to prevent collisions between multiple changesets.
         """
-        if custom_changeset_id is not None:
-            if custom_changeset_id in self.journal_data:
-                raise ValidationError(
-                    "Tried to record with an existing "
-                    f"changeset id: {custom_changeset_id!r}"
-                )
-            else:
-                changeset_id = custom_changeset_id
-        else:
+        if custom_changeset_id is None:
             changeset_id = uuid.uuid4()
 
+        elif custom_changeset_id in self.journal_data:
+            raise ValidationError(
+                "Tried to record with an existing "
+                f"changeset id: {custom_changeset_id!r}"
+            )
+        else:
+            changeset_id = custom_changeset_id
         self.journal_data[changeset_id] = {}
         return changeset_id
 
@@ -184,7 +183,7 @@ class Journal(BaseDB):
             elif check_changeset_id == changeset_id:
                 return False
         raise ValidationError(
-            "Changeset ID %s is not in the journal" % check_changeset_id
+            f"Changeset ID {check_changeset_id} is not in the journal"
         )
 
     def commit_changeset(
@@ -276,9 +275,7 @@ class Journal(BaseDB):
                     continue
                 elif value is DELETED_ENTRY:
                     del tracker[key]
-                elif value is ERASE_CREATED_ENTRY:
-                    pass
-                else:
+                elif value is not ERASE_CREATED_ENTRY:
                     tracker[key] = cast(bytes, value)
 
                 visited_keys.add(key)
@@ -371,13 +368,12 @@ class JournalDB(BaseDB):
     def __delitem__(self, key: bytes) -> None:
         if key in self.wrapped_db:
             self.journal.delete_wrapped(key)
+        elif key in self.journal:
+            self.journal.delete_local(key)
         else:
-            if key in self.journal:
-                self.journal.delete_local(key)
-            else:
-                raise KeyError(
-                    key, "key could not be deleted in JournalDB, because it was missing"
-                )
+            raise KeyError(
+                key, "key could not be deleted in JournalDB, because it was missing"
+            )
 
     #
     # Snapshot API
@@ -451,9 +447,7 @@ class JournalDB(BaseDB):
             try:
                 if value is DELETED_ENTRY:
                     del self.wrapped_db[key]
-                elif value is ERASE_CREATED_ENTRY:
-                    pass
-                else:
+                elif value is not ERASE_CREATED_ENTRY:
                     self.wrapped_db[key] = cast(bytes, value)
             except Exception:
                 self._reapply_changeset_to_journal(root_changeset, journal_data)

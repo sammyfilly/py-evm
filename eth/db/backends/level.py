@@ -132,10 +132,7 @@ class LevelDBWriteBatch(BaseDB, AtomicWriteBatchAPI):
         try:
             self._track_diff[key]
         except DiffMissingError as missing:
-            if missing.is_deleted:
-                return False
-            else:
-                return key in self._original_read_db
+            return False if missing.is_deleted else key in self._original_read_db
         else:
             return True
 

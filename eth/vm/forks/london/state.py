@@ -82,7 +82,7 @@ class LondonTransactionExecutor(BerlinTransactionExecutor):
             encode_hex(keccak(transaction.data)),
         )
 
-        message = Message(
+        return Message(
             gas=message_gas,
             to=transaction.to,
             sender=transaction.sender,
@@ -91,7 +91,6 @@ class LondonTransactionExecutor(BerlinTransactionExecutor):
             code=code,
             create_address=contract_address,
         )
-        return message
 
     @classmethod
     def calculate_gas_refund(cls, computation: ComputationAPI, gas_used: int) -> int:

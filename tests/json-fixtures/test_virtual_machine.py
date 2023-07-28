@@ -89,12 +89,11 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture
 def fixture(fixture_data):
     fixture_path, fixture_key = fixture_data
-    fixture = load_fixture(
+    return load_fixture(
         fixture_path,
         fixture_key,
         normalize_vmtest_fixture,
     )
-    return fixture
 
 
 #
@@ -115,9 +114,10 @@ def apply_create_message_for_testing(cls, *args):
 
 
 def get_block_hash_for_testing(self, block_number):
-    if block_number >= self.block_number:
-        return b""
-    elif block_number < self.block_number - 256:
+    if (
+        block_number >= self.block_number
+        or block_number < self.block_number - 256
+    ):
         return b""
     else:
         return keccak(to_bytes(text=f"{block_number}"))
@@ -141,14 +141,16 @@ HomesteadVMForTesting = HomesteadVM.configure(
 
 @pytest.fixture(params=["Frontier", "Homestead", "EIP150", "SpuriousDragon"])
 def vm_class(request):
-    if request.param == "Frontier":
+    if (
+        request.param == "Frontier"
+        or request.param != "Homestead"
+        and request.param == "EIP150"
+        or request.param != "Homestead"
+        and request.param == "SpuriousDragon"
+    ):
         pytest.skip("Only the Homestead VM rules are currently supported")
     elif request.param == "Homestead":
         return HomesteadVMForTesting
-    elif request.param == "EIP150":
-        pytest.skip("Only the Homestead VM rules are currently supported")
-    elif request.param == "SpuriousDragon":
-        pytest.skip("Only the Homestead VM rules are currently supported")
     else:
         raise AssertionError(f"Unsupported VM: {request.param}")
 
